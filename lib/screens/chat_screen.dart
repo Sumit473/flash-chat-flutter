@@ -23,13 +23,6 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  void messageStream() async{
-    await for (var snapshot in _firestore.collection('messages').snapshots()) {
-      for (var message in snapshot.docs) {
-        print(message.data());
-      }
-    }
-  }
   @override
   void initState() {
     super.initState();
@@ -45,9 +38,8 @@ class _ChatScreenState extends State<ChatScreen> {
           IconButton(
               icon: Icon(Icons.close),
               onPressed: () {
-                messageStream();
-                // _auth.signOut();
-                // Navigator.pop(context);
+                _auth.signOut();
+                Navigator.pop(context);
               }),
         ],
         title: Text('⚡️Chat'),
@@ -59,6 +51,24 @@ class _ChatScreenState extends State<ChatScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
+            StreamBuilder<QuerySnapshot>(
+              stream: _firestore.collection('messages').snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  final messages = snapshot.data.docs;
+                  List<Text> messageWidgets = [];
+                  for (var message in messages) {
+                    final messageText = message.data()['text'];
+                    final messageSender = message.data()['sender'];
+                    messageWidgets.add(Text('$messageText from $messageSender'));
+                  }
+                  return Column(
+                    children: messageWidgets,
+                  );
+                }
+                return null;
+              },
+            ),
             Container(
               decoration: kMessageContainerDecoration,
               child: Row(
